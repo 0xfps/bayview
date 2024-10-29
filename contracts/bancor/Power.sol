@@ -11,7 +11,7 @@ import { SafeMath } from "./libraries/SafeMath.sol";
  * @notice  Lifted from https://github.com/slothman3878/bondingcurve/blob/main/contracts/BancorFormula/Power.sol.
  */
 
-contract Power {
+abstract contract Power {
     using SafeMath for uint256;
 
     uint256 private constant ONE = 1;
@@ -274,7 +274,7 @@ contract Power {
      * - This function finds the position of [the smallest value in "maxExpArray" larger than or equal to "x"]
      * - This function finds the highest position of [a value in "maxExpArray" larger than or equal to "x"]
      */
-    function findPositionInMaxExpArray(uint256 _x) internal view returns (uint8) {
+    function findPositionInMaxExpArray(uint256 _x) internal view returns (uint8 position) {
         uint8 lo = MIN_PRECISION;
         uint8 hi = MAX_PRECISION;
 
@@ -284,8 +284,8 @@ contract Power {
             else hi = mid;
         }
 
-        if (maxExpArray[hi] >= _x) return hi;
-        if (maxExpArray[lo] >= _x) return lo;
+        if (maxExpArray[hi] >= _x) { position = hi; return position; }
+        if (maxExpArray[lo] >= _x) { position = lo; return position; }
 
         // revert if no return
         require(false);
