@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { IPyth } from "@pyth/IPyth.sol";
+import { IPythOracle } from "./interfaces/IPythOracle.sol";
 
 import { PriceBelowZero } from "../errors/Errors.sol";
 import { PythStructs } from "@pyth/PythStructs.sol";
@@ -12,7 +13,7 @@ import { PythStructs } from "@pyth/PythStructs.sol";
  * @notice  This contract handles the retrieval of ETH/USD prices from Pyth oracles.
  */
 
-abstract contract PythOracle {
+contract PythOracle is IPythOracle {
     IPyth internal immutable pyth;
     bytes32 internal constant ETH_USD_ID = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace;
     uint16 internal THREE_HOURS = 60 * 60 * 3; 
@@ -25,7 +26,7 @@ abstract contract PythOracle {
         return address(pyth);
     }
 
-    function getETHPriceInUSD() internal view returns (uint256 price, uint256 exponent) {
+    function getETHPriceInUSD() public view returns (uint256 price, uint256 exponent) {
         PythStructs.Price memory priceStruct = pyth.getPriceNoOlderThan(ETH_USD_ID, THREE_HOURS);
         
         _checkPriceBelowZero(priceStruct);
