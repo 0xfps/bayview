@@ -51,6 +51,8 @@ contract BayviewContinuousTokenFactory is IBayviewContinuousTokenFactory {
 
         bayviewTokenMap[token] = true;
         ++bayviewTokenDeploymentCount;
+        
+        emit Deploy(msg.sender, token);
     }
 
     function buy(IBayviewContinuousToken token) public payable returns (uint256 amountMinted) {
