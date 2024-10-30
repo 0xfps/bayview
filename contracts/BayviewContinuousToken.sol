@@ -127,7 +127,7 @@ contract BayviewContinuousToken is
     }
 
     function _convertWeightTo18Decimals() internal pure returns (uint256) {
-        return (reserveWeight * 1e18) / 1e6;
+        return (uint256(reserveWeight) * 1e18) / 1e6;
     }
 
     // Market cap PS = R / F, remember.
