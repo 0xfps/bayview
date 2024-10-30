@@ -7,7 +7,7 @@ import { IBayviewContinuousTokenFactory } from "./interfaces/IBayviewContinuousT
 import "./errors/Errors.sol";
 import { BayviewContinuousToken } from "./BayviewContinuousToken.sol";
 
-abstract contract BayviewContinuousTokenFactory is IBayviewContinuousTokenFactory {
+contract BayviewContinuousTokenFactory is IBayviewContinuousTokenFactory {
     uint256 public constant MIN_DEPLOYMENT_FEE = 1e13;
     
     address public immutable pythOracleAddress;
