@@ -6,6 +6,8 @@ import { IEmitter } from "./interfaces/IEmitter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IPythOracle } from "./oracles/interfaces/IPythOracle.sol";
 
+import { Math } from "./libraries/Math.sol";
+
 import "./errors/Errors.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { BancorBondingCurveMath } from "./bancor/BancorBondingCurveMath.sol";
@@ -22,10 +24,10 @@ contract BayviewContinuousToken is
     address public immutable factory;
     IEmitter internal immutable emitter;
 
+    uint64 internal constant INITIAL_MINT = 1e18;
     uint32 public constant reserveWeight = 200_000;
     uint32 public constant BONDING_CURVE_LIMIT = 69_000; 
     uint32 public constant LP_HALF = 15_000;
-    uint64 public constant FIRST_MINT = 1e18;
     
     address public owner;
     address public pool;
@@ -54,8 +56,9 @@ contract BayviewContinuousToken is
         pythOracle = IPythOracle(_pythOracle);
         factory = msg.sender;
         emitter = IEmitter(msg.sender);
-        _mint(factory, FIRST_MINT);
         owner = _owner;
+
+        _mint(factory, INITIAL_MINT);
     }
 
     fallback () external payable {}
@@ -160,7 +163,6 @@ contract BayviewContinuousToken is
     function _attemptPoolCreationAndLiquidityAddition() internal {
         if (pool == address(0)) {
             _attemptPoolCreationIfPoolInexistent();
-            _attemptLiquidityAddition();
         }
     }
 
@@ -168,11 +170,7 @@ contract BayviewContinuousToken is
         if (_calculateMarketCapInUSD() < BONDING_CURVE_LIMIT) return;
 
         _rewardOwnerWith1PercentOfReserve();
-        address _pool = _createNewPoolIfNecessary(address(this));
-        pool = _pool;
-    }
 
-    function _attemptLiquidityAddition() internal {
         uint256 ethValueToSend = _calculateETHEquivalentForLPHalfUSDValue();
         uint256 tokenAmountToSend = quantityToBuyWithDepositAmount(ethValueToSend);
         
@@ -182,8 +180,18 @@ contract BayviewContinuousToken is
         _getWETHForETH(ethValueToSend);
         IERC20(WETH).approve(pool, ethValueToSend);
 
+        uint160 sqrtPriceX96 = _getSqrtPriceX96(tokenAmountToSend, ethValueToSend);
+
+        pool = _createNewPoolIfNecessary(sqrtPriceX96);
         uint128 liquidity = _addLiquidity(tokenAmountToSend, ethValueToSend);
         if (liquidity == 0) revert LiquidityNotAdded();
+    }
+
+    // https://stackoverflow.com/questions/78182497/how-to-calculate-sqrtpricex96-for-uniswap-pool-creation
+    function _getSqrtPriceX96(uint256 bayviewTokenAmount, uint256 wethAmount) internal pure returns (uint160 sqrtPriceX96) {
+        uint256 priceSqrd = wethAmount / bayviewTokenAmount;
+        uint256 sqrtPrice = Math.sqrt(priceSqrd);
+        sqrtPriceX96 = uint160(sqrtPrice * (2 ** 96));
     }
 
     function _getWETHForETH(uint256 ethValueToSend) internal {
