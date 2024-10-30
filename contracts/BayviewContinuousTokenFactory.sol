@@ -42,7 +42,8 @@ contract BayviewContinuousTokenFactory is IBayviewContinuousTokenFactory {
             symbol,
             nonFungiblePositionManager,
             pythOracleAddress,
-            WETH
+            WETH,
+            msg.sender
         ));
 
         uint256 initialReserve = msg.value / 2;

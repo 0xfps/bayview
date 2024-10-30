@@ -27,6 +27,7 @@ contract BayviewContinuousToken is
     uint32 public constant LP_HALF = 15_000;
     uint64 public constant FIRST_MINT = 1e18;
     
+    address public owner;
     address public pool;
     bool internal locked;
 
@@ -47,12 +48,14 @@ contract BayviewContinuousToken is
         string memory symbol,
         address _nonFungiblePositionManager,
         address _pythOracle,
-        address _weth
+        address _weth,
+        address _owner
     ) ERC20(name, symbol) PoolLiquidityProvider (_nonFungiblePositionManager, _weth) {
         pythOracle = IPythOracle(_pythOracle);
         factory = msg.sender;
         emitter = IEmitter(msg.sender);
         _mint(factory, FIRST_MINT);
+        owner = _owner;
     }
 
     fallback () external payable {}
@@ -157,6 +160,7 @@ contract BayviewContinuousToken is
     function _attemptPoolCreation() internal {
         if (_calculateMarketCapInUSD() < BONDING_CURVE_LIMIT) return;
 
+        _rewardOwnerWith1PercentOfReserve();
         address _pool = _createNewPoolIfNecessary(address(this));
         pool = _pool;
     }
@@ -181,5 +185,11 @@ contract BayviewContinuousToken is
     function _attemptPoolCreationAndLiquidityAddition() internal {
         _attemptPoolCreation();
         _attemptLiquidityAddition();
+    }
+
+    function _rewardOwnerWith1PercentOfReserve() internal {
+        uint256 onePercentOfReserve = getReserveBalance() / 100;
+        (bool sent, ) = owner.call{ value: onePercentOfReserve }("");
+        _validateSending(sent, onePercentOfReserve);
     }
 }
