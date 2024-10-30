@@ -109,7 +109,7 @@ contract BayviewContinuousToken is
         
         _mint(recipient, amountMinted);
         
-        _attemptPoolCreationAndLiquidityAddition();
+        _attemptPoolSetup();
 
         emitter.emitBuy(amountMinted, deposit);
         emit Mint(recipient, amountMinted, deposit);
@@ -160,31 +160,34 @@ contract BayviewContinuousToken is
         value = numerator / denominator;
     }
 
-    function _attemptPoolCreationAndLiquidityAddition() internal {
+    function _attemptPoolSetup() internal {
+        if (_calculateMarketCapInUSD() < BONDING_CURVE_LIMIT) return;
+
         if (pool == address(0)) {
-            _attemptPoolCreationIfPoolInexistent();
+            _rewardOwnerWith1PercentOfReserve();
+            _setupNewPoolWithLiquidity();
         }
     }
 
-    function _attemptPoolCreationIfPoolInexistent() internal {
-        if (_calculateMarketCapInUSD() < BONDING_CURVE_LIMIT) return;
-
-        _rewardOwnerWith1PercentOfReserve();
-
-        uint256 ethValueToSend = _calculateETHEquivalentForLPHalfUSDValue();
-        uint256 tokenAmountToSend = quantityToBuyWithDepositAmount(ethValueToSend);
-        
-        _mint(address(this), tokenAmountToSend);
-        _approve(address(this), pool, tokenAmountToSend);
-
-        _getWETHForETH(ethValueToSend);
-        IERC20(WETH).approve(pool, ethValueToSend);
+    function _setupNewPoolWithLiquidity() internal {
+        (uint256 tokenAmountToSend, uint256 ethValueToSend) = _approveBothAssetsAndReturnAmounts();
 
         uint160 sqrtPriceX96 = _getSqrtPriceX96(tokenAmountToSend, ethValueToSend);
 
         pool = _createNewPoolIfNecessary(sqrtPriceX96);
         uint128 liquidity = _addLiquidity(tokenAmountToSend, ethValueToSend);
         if (liquidity == 0) revert LiquidityNotAdded();
+    }
+
+    function _approveBothAssetsAndReturnAmounts() internal returns (uint256 tokenAmountToSend, uint256 ethValueToSend) {
+        ethValueToSend = _calculateETHEquivalentForLPHalfUSDValue();
+        tokenAmountToSend = quantityToBuyWithDepositAmount(ethValueToSend);
+        
+        _mint(address(this), tokenAmountToSend);
+        _approve(address(this), pool, tokenAmountToSend);
+
+        _getWETHForETH(ethValueToSend);
+        IERC20(WETH).approve(pool, ethValueToSend);
     }
 
     // https://stackoverflow.com/questions/78182497/how-to-calculate-sqrtpricex96-for-uniswap-pool-creation
