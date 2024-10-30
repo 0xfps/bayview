@@ -15,13 +15,7 @@ contract BayviewContinuousTokenFactory is IBayviewContinuousTokenFactory {
     address public immutable nonFungiblePositionManager;
 
     uint256 public bayviewTokenDeploymentCount;
-    bool public initialized;
     mapping(address bayviewToken => bool isBayViewToken) public bayviewTokenMap;
-
-    modifier factoryInitialized {
-        if (!initialized) revert Uninitialized();
-        _;
-    }
 
     fallback () external payable {}
     receive () external payable {}
@@ -39,7 +33,6 @@ contract BayviewContinuousTokenFactory is IBayviewContinuousTokenFactory {
     function deployBayviewContinuousToken(string memory name, string memory symbol) 
         public
         payable
-        factoryInitialized
         returns (address token)
     {
         if (msg.value < MIN_DEPLOYMENT_FEE) revert LowDeploymentFee();
