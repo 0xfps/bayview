@@ -25,6 +25,7 @@ contract BayviewContinuousToken is
     uint32 public constant reserveWeight = 200_000;
     uint32 public constant BONDING_CURVE_LIMIT = 69_000; 
     uint32 public constant LP_HALF = 15_000;
+    uint64 public constant FIRST_MINT = 1e18;
     
     address public pool;
     bool internal locked;
@@ -51,6 +52,7 @@ contract BayviewContinuousToken is
         pythOracle = IPythOracle(_pythOracle);
         factory = msg.sender;
         emitter = IEmitter(msg.sender);
+        _mint(factory, FIRST_MINT);
     }
 
     fallback () external payable {}

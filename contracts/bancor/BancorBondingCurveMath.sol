@@ -17,7 +17,6 @@ import { Power } from "./Power.sol";
 abstract contract BancorBondingCurveMath is Power {
   using SafeMath for uint256;
 
-  uint256 internal constant START_PRICE = 1e13;
   uint32 private constant MAX_WEIGHT = 1_000_000;
 
   function price(
@@ -25,7 +24,6 @@ abstract contract BancorBondingCurveMath is Power {
     uint256 totalSupply,
     uint32 reserveWeight
     ) internal view virtual returns (uint256) {
-      if (totalSupply == 0) return START_PRICE;
       return (reserveBalance.div(totalSupply)).mul(MAX_WEIGHT / reserveWeight);
   }
 
