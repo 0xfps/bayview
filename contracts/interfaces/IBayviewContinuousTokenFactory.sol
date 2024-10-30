@@ -5,7 +5,7 @@ import { IBayviewContinuousToken } from "./IBayviewContinuousToken.sol";
 import { IEmitter } from "./IEmitter.sol";
 
 interface IBayviewContinuousTokenFactory is IEmitter {
-    event Deploy (address indexed bayviewToken);
+    event Deploy (address indexed deployer, address indexed bayviewToken);
 
     event Buy (
         address indexed bayviewToken,
