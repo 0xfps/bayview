@@ -157,7 +157,14 @@ contract BayviewContinuousToken is
         value = numerator / denominator;
     }
 
-    function _attemptPoolCreation() internal {
+    function _attemptPoolCreationAndLiquidityAddition() internal {
+        if (pool == address(0)) {
+            _attemptPoolCreationIfPoolInexistent();
+            _attemptLiquidityAddition();
+        }
+    }
+
+    function _attemptPoolCreationIfPoolInexistent() internal {
         if (_calculateMarketCapInUSD() < BONDING_CURVE_LIMIT) return;
 
         _rewardOwnerWith1PercentOfReserve();
@@ -166,25 +173,22 @@ contract BayviewContinuousToken is
     }
 
     function _attemptLiquidityAddition() internal {
-        if (pool == address(0)) return;
-
         uint256 ethValueToSend = _calculateETHEquivalentForLPHalfUSDValue();
         uint256 tokenAmountToSend = quantityToBuyWithDepositAmount(ethValueToSend);
         
         _mint(address(this), tokenAmountToSend);
         _approve(address(this), pool, tokenAmountToSend);
 
-        (bool sent, ) = WETH.call{ value: ethValueToSend }("");
-        _validateSending(sent, ethValueToSend);
+        _getWETHForETH(ethValueToSend);
         IERC20(WETH).approve(pool, ethValueToSend);
 
         uint128 liquidity = _addLiquidity(tokenAmountToSend, ethValueToSend);
         if (liquidity == 0) revert LiquidityNotAdded();
     }
 
-    function _attemptPoolCreationAndLiquidityAddition() internal {
-        _attemptPoolCreation();
-        _attemptLiquidityAddition();
+    function _getWETHForETH(uint256 ethValueToSend) internal {
+        (bool sent, ) = WETH.call{ value: ethValueToSend }("");
+        _validateSending(sent, ethValueToSend);
     }
 
     function _rewardOwnerWith1PercentOfReserve() internal {
