@@ -23,7 +23,7 @@ abstract contract BancorBondingCurveMath is Power {
     uint256 reserveBalance,
     uint256 totalSupply,
     uint32 reserveWeight
-    ) public view virtual returns (uint256) {
+    ) internal view virtual returns (uint256) {
       return (reserveBalance.div(totalSupply)).mul(MAX_WEIGHT / reserveWeight);
   }
 
@@ -47,7 +47,7 @@ abstract contract BancorBondingCurveMath is Power {
     uint256 _reserveBalance,
     uint32 _reserveWeight,
     uint256 _amount
-  ) public view virtual returns (uint256) {
+  ) internal view virtual returns (uint256) {
     require(_supply > 0, "ERR_INVALID_SUPPLY");
     require(_reserveBalance > 0, "ERR_INVALID_RESERVE_BALANCE");
     require(_reserveWeight > 0 && _reserveWeight <= MAX_WEIGHT, "ERR_INVALID_RESERVE_RATIO");
@@ -80,7 +80,7 @@ abstract contract BancorBondingCurveMath is Power {
     uint256 _reserveBalance,
     uint32 _reserveWeight,
     uint256 _amount
-  ) public view virtual returns (uint256) {
+  ) internal view virtual returns (uint256) {
     require(_supply > 0, "ERR_INVALID_SUPPLY");
     require(_reserveBalance > 0, "ERR_INVALID_RESERVE_BALANCE");
     require(_reserveWeight > 0 && _reserveWeight <= MAX_WEIGHT, "ERR_INVALID_RESERVE_WEIGHT");
@@ -113,7 +113,7 @@ abstract contract BancorBondingCurveMath is Power {
     uint256 _reserveBalance,
     uint32 _reserveWeight,
     uint256 _amount
-  ) public view virtual returns (uint256) {
+  ) internal view virtual returns (uint256) {
     require(_supply > 0, "ERR_INVALID_SUPPLY");
     require(_reserveBalance > 0, "ERR_INVALID_RESERVE_BALANCE");
     require(_reserveWeight > 0 && _reserveWeight <= MAX_WEIGHT, "ERR_INVALID_RESERVE_WEIGHT");
