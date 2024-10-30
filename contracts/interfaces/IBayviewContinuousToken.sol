@@ -4,21 +4,22 @@ pragma solidity ^0.8.0;
 interface IBayviewContinuousToken {
     event Mint(
         address indexed mintedBy,
-        uint256 indexed amount
+        uint256 indexed amount,
+        uint256 indexed value
     );
 
     event Retire(
         address indexed retiredBy,
         uint256 indexed amount,
-        uint256 value
+        uint256 indexed value
     );
   
-    function price() external view returns (uint256 price);
-    function getReserve() external view returns (uint256 reserve);
-    function reserveWeight() external view returns (uint32 weight);
+    function price() external view returns (uint256);
+    function reserveWeight() external view returns (uint32);
+    function getReserveBalance() external view returns (uint256);
 
-    function mint() external payable returns (uint256 amountMinted);
-    function retire() external payable returns (uint256 valueReceived);
+    function mint(address recipient) external payable returns (uint256 amountMinted);
+    function retire(address retiree, uint256 amount) external returns (uint256 valueReceived);
 
     function reserveTokenPriceForAmount(uint256 amount) external view returns (uint256);
     function quantityToBuyWithDepositAmount(uint256 amount) external view returns (uint256);
