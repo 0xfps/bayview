@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { IBayviewContinuousToken } from "./interfaces/IBayviewContinuousToken.sol";
+import { IEmitter } from "./interfaces/IEmitter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IPythOracle } from "./oracles/interfaces/IPythOracle.sol";
 
@@ -19,6 +20,7 @@ contract BayviewContinuousToken is
     IPythOracle public pythOracle;
 
     address public immutable factory;
+    IEmitter internal immutable emitter;
 
     uint32 public constant reserveWeight = 200_000;
     uint32 public constant BONDING_CURVE_LIMIT = 69_000; 
@@ -48,7 +50,11 @@ contract BayviewContinuousToken is
     ) ERC20(name, symbol) PoolLiquidityProvider (_nonFungiblePositionManager, _weth) {
         pythOracle = IPythOracle(_pythOracle);
         factory = msg.sender;
+        emitter = IEmitter(msg.sender);
     }
+
+    fallback () external payable {}
+    receive () external payable {}
 
     function price() public view override returns (uint256) {
         return super.price(
@@ -92,8 +98,12 @@ contract BayviewContinuousToken is
     function mint(address recipient) public payable poolNotInitialized returns (uint256 amountMinted) {
         uint256 deposit = msg.value;
         amountMinted = quantityToBuyWithDepositAmount(deposit);
+        
         _mint(recipient, amountMinted);
+        
         _attemptPoolCreationAndLiquidityAddition();
+
+        emitter.emitBuy(amountMinted, deposit);
         emit Mint(recipient, amountMinted, deposit);
     }
 
@@ -108,6 +118,7 @@ contract BayviewContinuousToken is
         
         _validateSending(sent, valueReceived);
         
+        emitter.emitSell(amount, valueReceived);
         emit Retire(retiree, amount, valueReceived);
     }
 
