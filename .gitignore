@@ -1,5 +1,7 @@
 node_modules
 .env
+out
+cache_forge
 
 # Hardhat files
 /cache
@@ -15,5 +17,3 @@ node_modules
 
 # Hardhat Ignition default folder for deployments against a local node
 ignition/deployments/chain-31337
-out
-cache_forge
