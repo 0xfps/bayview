@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
+/**
+ * @title   IPoolInitializer.
+ * @author  Uniswap (@Uniswap).
+ * @notice  Lifted from
+ *          https://github.com/Uniswap/v3-periphery/blob/main/contracts/interfaces/IPoolInitializer.sol.
+ */
+
 interface IPoolInitializer {
     /// @notice Creates a new pool if it does not exist, then initializes if not initialized
     /// @dev This method can be bundled with others via IMulticall for the first action (e.g. mint) performed against a pool

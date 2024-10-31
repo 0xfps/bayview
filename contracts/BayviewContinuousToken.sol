@@ -9,9 +9,17 @@ import { IPythOracle } from "./oracles/interfaces/IPythOracle.sol";
 import { Math } from "./libraries/Math.sol";
 
 import "./errors/Errors.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { BancorBondingCurveMath } from "./bancor/BancorBondingCurveMath.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { PoolLiquidityProvider } from "./liquidity-pool/PoolLiquidityProvider.sol";
+
+/**
+ * @title   BayviewContinuousToken.
+ * @author  fps (@0xfps).
+ * @notice  A continuous token with a $69,000 market cap limit. After the market cap is reached,
+ *          $30,000 ($15,000 of the token and $15,000 of ETH) is deposited into a newly created
+ *          UniswapV3 pool.
+ */
 
 contract BayviewContinuousToken is 
     IBayviewContinuousToken, 
@@ -21,7 +29,7 @@ contract BayviewContinuousToken is
 {
     IPythOracle public pythOracle;
 
-    address public immutable factory;
+    address public immutable controller;
     IEmitter internal immutable emitter;
 
     uint64 internal constant INITIAL_MINT = 1e18;
@@ -34,7 +42,7 @@ contract BayviewContinuousToken is
     bool internal locked;
 
     modifier lock {
-        if (locked) revert Locked();
+        if (locked) revert TransactionLocked();
         locked = true;
         _;
         locked = false;
@@ -54,11 +62,11 @@ contract BayviewContinuousToken is
         address _owner
     ) ERC20(name, symbol) PoolLiquidityProvider (_nonFungiblePositionManager, _weth) {
         pythOracle = IPythOracle(_pythOracle);
-        factory = msg.sender;
+        controller = msg.sender;
         emitter = IEmitter(msg.sender);
         owner = _owner;
 
-        _mint(factory, INITIAL_MINT);
+        _mint(controller, INITIAL_MINT);
     }
 
     fallback () external payable {}
@@ -111,23 +119,27 @@ contract BayviewContinuousToken is
         
         _attemptPoolSetup();
 
-        emitter.emitBuy(amountMinted, deposit);
+        if (msg.sender != controller)
+            emitter.emitBuy(amountMinted, deposit);
+        
         emit Mint(recipient, amountMinted, deposit);
     }
 
-    function retire(address retiree, uint256 amount) public poolNotInitialized lock returns (uint256 valueReceived) {
-        if ((msg.sender != factory) && (msg.sender != retiree)) revert InvalidCaller();
+    function retire(address retiree, uint256 amount) public poolNotInitialized lock returns (uint256 salePrice) {
+        if ((msg.sender != controller) && (msg.sender != retiree)) revert InvalidCaller();
         if (amount > balanceOf(retiree)) revert BurnExceedsBalance();
         
         _burn(retiree, amount);
 
-        valueReceived = valueToReceiveAfterTokenAmountSale(amount);
-        (bool sent, ) = retiree.call{ value: valueReceived }("");
+        salePrice = valueToReceiveAfterTokenAmountSale(amount);
+        (bool sent, ) = retiree.call{ value: salePrice }("");
         
-        _validateSending(sent, valueReceived);
+        _validateSending(sent, salePrice);
         
-        emitter.emitSell(amount, valueReceived);
-        emit Retire(retiree, amount, valueReceived);
+        if (msg.sender != controller)
+            emitter.emitSell(amount, salePrice);
+        
+        emit Retire(retiree, amount, salePrice);
     }
 
     function _validateSending(bool sent, uint256 value) internal pure {
@@ -151,15 +163,6 @@ contract BayviewContinuousToken is
         return numerator / denominator;
     }
 
-    function _calculateETHEquivalentForLPHalfUSDValue() internal view returns (uint256 value) {
-        (uint256 ethUsdPrice, uint256 precision) = pythOracle.getETHPriceInUSD();
-        uint256 usdLpHalfToPrecision = LP_HALF * (10 ** precision);
-        uint256 oneETH = 1e18;
-        uint256 numerator = oneETH * usdLpHalfToPrecision;
-        uint256 denominator = ethUsdPrice * (10 ** precision);
-        value = numerator / denominator;
-    }
-
     function _attemptPoolSetup() internal {
         if (_calculateMarketCapInUSD() < BONDING_CURVE_LIMIT) return;
 
@@ -167,6 +170,12 @@ contract BayviewContinuousToken is
             _rewardOwnerWith1PercentOfReserve();
             _setupNewPoolWithLiquidity();
         }
+    }
+
+    function _rewardOwnerWith1PercentOfReserve() internal {
+        uint256 onePercentOfReserve = getReserveBalance() / 100;
+        (bool sent, ) = owner.call{ value: onePercentOfReserve }("");
+        _validateSending(sent, onePercentOfReserve);
     }
 
     function _setupNewPoolWithLiquidity() internal {
@@ -190,11 +199,13 @@ contract BayviewContinuousToken is
         IERC20(WETH).approve(pool, ethValueToSend);
     }
 
-    // https://stackoverflow.com/questions/78182497/how-to-calculate-sqrtpricex96-for-uniswap-pool-creation
-    function _getSqrtPriceX96(uint256 bayviewTokenAmount, uint256 wethAmount) internal pure returns (uint160 sqrtPriceX96) {
-        uint256 priceSqrd = wethAmount / bayviewTokenAmount;
-        uint256 sqrtPrice = Math.sqrt(priceSqrd);
-        sqrtPriceX96 = uint160(sqrtPrice * (2 ** 96));
+    function _calculateETHEquivalentForLPHalfUSDValue() internal view returns (uint256 value) {
+        (uint256 ethUsdPrice, uint256 precision) = pythOracle.getETHPriceInUSD();
+        uint256 usdLpHalfToPrecision = LP_HALF * (10 ** precision);
+        uint256 oneETH = 1e18;
+        uint256 numerator = oneETH * usdLpHalfToPrecision;
+        uint256 denominator = ethUsdPrice * (10 ** precision);
+        value = numerator / denominator;
     }
 
     function _getWETHForETH(uint256 ethValueToSend) internal {
@@ -202,9 +213,10 @@ contract BayviewContinuousToken is
         _validateSending(sent, ethValueToSend);
     }
 
-    function _rewardOwnerWith1PercentOfReserve() internal {
-        uint256 onePercentOfReserve = getReserveBalance() / 100;
-        (bool sent, ) = owner.call{ value: onePercentOfReserve }("");
-        _validateSending(sent, onePercentOfReserve);
+    // https://stackoverflow.com/questions/78182497/how-to-calculate-sqrtpricex96-for-uniswap-pool-creation
+    function _getSqrtPriceX96(uint256 bayviewTokenAmount, uint256 wethAmount) internal pure returns (uint160 sqrtPriceX96) {
+        uint256 priceSqrd = wethAmount / bayviewTokenAmount;
+        uint256 sqrtPrice = Math.sqrt(priceSqrd);
+        sqrtPriceX96 = uint160(sqrtPrice * (2 ** 96));
     }
 }

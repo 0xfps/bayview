@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
-// a library for performing various math operations
+/**
+ * @title   Math.
+ * @author  Uniswap <@uniswap> 
+ * @notice  A library for finding the square root of a number. Lifted from
+ *          https://github.com/Uniswap/v2-core/blob/4dd59067c76dea4a0e8e4bfdda41877a6b16dedc/contracts/libraries/Math.sol#L11.
+ */
 
 library Math {
     // babylonian method (https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method)

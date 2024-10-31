@@ -2,12 +2,19 @@
 pragma solidity ^0.8.0;
 
 import { IBayviewContinuousToken } from "./interfaces/IBayviewContinuousToken.sol";
-import { IBayviewContinuousTokenFactory } from "./interfaces/IBayviewContinuousTokenFactory.sol";
+import { IBayviewContinuousTokenController } from "./interfaces/IBayviewContinuousTokenController.sol";
 
 import "./errors/Errors.sol";
 import { BayviewContinuousToken } from "./BayviewContinuousToken.sol";
 
-contract BayviewContinuousTokenFactory is IBayviewContinuousTokenFactory {
+/**
+ * @title   BayviewContinuousTokenController.
+ * @author  fps <@0xfps>.
+ * @notice  This contract deploys new BayviewContinuousToken contracts and acts as a source for
+ *          interactions with them.
+ */
+
+contract BayviewContinuousTokenController is IBayviewContinuousTokenController {
     uint256 public constant MIN_DEPLOYMENT_FEE = 1e13;
     
     address public immutable pythOracleAddress;
@@ -60,9 +67,9 @@ contract BayviewContinuousTokenFactory is IBayviewContinuousTokenFactory {
         amountMinted = token.mint{ value: msg.value }(msg.sender);
         emit Buy(address(token), amountMinted, msg.value);
     }
-    function sell(IBayviewContinuousToken token, uint256 amount) public returns (uint256 valueReceived) {
-        valueReceived = token.retire(msg.sender, amount);
-        emit Sell(address(token), amount, valueReceived);
+    function sell(IBayviewContinuousToken token, uint256 amount) public returns (uint256 salePrice) {
+        salePrice = token.retire(msg.sender, amount);
+        emit Sell(address(token), amount, salePrice);
     }
 
     function emitBuy(uint256 amountMinted, uint256 value) external {
@@ -70,8 +77,8 @@ contract BayviewContinuousTokenFactory is IBayviewContinuousTokenFactory {
             emit Buy(msg.sender, amountMinted, value);
     }
 
-    function emitSell(uint256 amountSold, uint256 valueReceived) external {
+    function emitSell(uint256 amountSold, uint256 salePrice) external {
         if (bayviewTokenMap[msg.sender])
-            emit Sell(msg.sender, amountSold, valueReceived);
+            emit Sell(msg.sender, amountSold, salePrice);
     }
 }

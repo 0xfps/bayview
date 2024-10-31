@@ -5,10 +5,19 @@ import { INonFungiblePositionManager } from "./interfaces/INonFungiblePositionMa
 
 import { PoolCreator } from "./PoolCreator.sol";
 
+/**
+ * @title   PoolLiquidityProvider.
+ * @author  fps <@0xfps>.
+ * @notice  This contract handles the addition of liquidity to the created UniswapV3 pool.
+ */
+
 abstract contract PoolLiquidityProvider is PoolCreator {
     uint16 internal constant THIRTY_MINUTES = 60 * 30;
+
+    // Uniswap @ https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/TickMath.sol#L9-L11
     int24 internal constant MIN_TICK = -887272;
     int24 internal constant MAX_TICK = -MIN_TICK;
+    
     address internal constant RECIPIENT = address(1);
 
     constructor (address _nonFungiblePositionManager, address _weth)

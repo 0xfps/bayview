@@ -10,7 +10,7 @@ import { Power } from "./Power.sol";
  * @author  Bancor <https://github.com/bancorprotocol>.
  * @notice  Bancor bonding curve math, originally named `BancorFormula`, is a source code owned by Bancor Protocol, lifted from
  *          https://github.com/bancorprotocol/contracts-solidity/blob/master/solidity/contracts/converter/BancorFormula.sol
- *          with some minor alterations. The code used in this smart contract was copied from Slothman <https://github.com/slothman3878>
+ *          with some minor alterations. The code used in this smart contract was copied from Slothman <https://github.com/slothman3878>,
  *          at https://github.com/slothman3878/bondingcurve/blob/main/contracts/BancorFormula/BancorFormula.sol.
  */
 
@@ -19,6 +19,15 @@ abstract contract BancorBondingCurveMath is Power {
 
   uint32 private constant MAX_WEIGHT = 1_000_000;
 
+  /**
+   * @dev Returns the price of the token at any given time.
+   * 
+   * @param reserveBalance  Reserve balance in ETH. 
+   * @param totalSupply     Total supply.
+   * @param reserveWeight   Reserve weight in 6 decimals.
+   * 
+   * @return uint256 Price.
+   */
   function price(
     uint256 reserveBalance,
     uint256 totalSupply,
