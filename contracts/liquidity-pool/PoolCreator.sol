@@ -3,6 +3,12 @@ pragma solidity ^0.8.0;
 
 import { INonFungiblePositionManager } from "./interfaces/INonFungiblePositionManager.sol";
 
+/**
+ * @title   PoolCreator.
+ * @author  fps <@0xfps>.
+ * @notice  This contract handles the creation of a UniswapV3 pool.
+ */
+
 abstract contract PoolCreator {
     address internal immutable WETH;
     uint24 internal constant FEE = 3000;

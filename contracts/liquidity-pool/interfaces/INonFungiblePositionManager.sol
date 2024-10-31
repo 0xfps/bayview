@@ -3,6 +3,13 @@ pragma solidity ^0.8.0;
 
 import { IPoolInitializer } from "./IPoolInitializer.sol";
 
+/**
+ * @title   INonFungiblePositionManager.
+ * @author  Uniswap (@Uniswap).
+ * @notice  Lifted from
+ *          https://github.com/Uniswap/v3-periphery/blob/main/contracts/interfaces/INonfungiblePositionManager.sol.
+ */
+
 interface INonFungiblePositionManager is IPoolInitializer {
     struct MintParams {
         address token0;
