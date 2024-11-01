@@ -202,7 +202,7 @@ contract BayviewContinuousToken is
         uint256 usdLpHalfToPrecision = LP_HALF * (10 ** precision);
         uint256 oneETH = 1e18;
         uint256 numerator = oneETH * usdLpHalfToPrecision;
-        uint256 denominator = ethUsdPrice * (10 ** precision);
+        uint256 denominator = ethUsdPrice;
         value = numerator / denominator;
     }
 

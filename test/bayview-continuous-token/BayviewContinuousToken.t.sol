@@ -41,8 +41,6 @@ contract BayviewContinuousTokenTest is Addresses {
     }
 
     function testSetUp() public view {
-        bool iss = address(bayview) < address(WETH);
-        console.log(iss); 
         assertTrue(address(bayview) != address(0));
         assertTrue(bayview.pool() == address(0));
         assertTrue(bayview.owner() == owner);

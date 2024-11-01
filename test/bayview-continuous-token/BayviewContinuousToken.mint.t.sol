@@ -23,6 +23,7 @@ contract BayviewContinuousTokenMintTest is BayviewContinuousTokenTest {
 
     function testMintAndTryCreatePool() public {
         vm.deal(alice, 505 ether);
+        
         console.log("Old Pool ReserveBalance", bayview.getReserveBalance());
         console.log("Old Total Supply", bayview.totalSupply());
         console.log("Alice's address:", alice);
@@ -38,7 +39,5 @@ contract BayviewContinuousTokenMintTest is BayviewContinuousTokenTest {
         console.log("New Pool Price per token:", bayview.price());
         console.log("Price of sale:", bayview.valueToReceiveAfterTokenAmountSale(bayview.balanceOf(alice)));
         console.log("New Pool Address:", bayview.pool());
-        // console.log("ETH Market Cap:", bayview._calculateMarketCapInETH());
-        // console.log("USD Market Cap:", bayview._calculateMarketCapInUSD());
     }
 }
