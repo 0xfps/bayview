@@ -23,7 +23,7 @@ contract BayviewContinuousTokenMintTest is BayviewContinuousTokenTest {
         console.log("New Pool Price per token:", bayview.price());
     }
 
-    function testMintAndTryCreatePool() public {
+    function testMintAndCreatePool() public {
         vm.deal(alice, 505 ether);
         
         console.log("Old Pool ReserveBalance", bayview.getReserveBalance());
@@ -49,5 +49,14 @@ contract BayviewContinuousTokenMintTest is BayviewContinuousTokenTest {
         address newToken = controller.deployBayviewContinuousToken{ value: 1 ether }("Big Booty Latina", "$BLB");
         controller.buy{ value: 10 ether }(IBayviewContinuousToken(newToken));
         vm.stopPrank();
+    }
+
+    function testMintAfterPoolCreated() public {
+        testMintAndCreatePool();
+
+        vm.expectRevert();
+        vm.deal(alice, 505 ether);
+        vm.prank(alice);
+        bayview.mint{ value: 2 ether }(alice);
     }
 }
