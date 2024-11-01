@@ -33,7 +33,7 @@ contract BayviewContinuousToken is
     IEmitter internal immutable emitter;
 
     uint64 internal constant INITIAL_MINT = 1e18;
-    uint32 public constant reserveWeight = 200_000;
+    uint32 public constant reserveWeight = 700_000;
     uint32 public constant BONDING_CURVE_LIMIT = 69_000; 
     uint32 public constant LP_HALF = 15_000;
     
@@ -150,10 +150,8 @@ contract BayviewContinuousToken is
         return (uint256(reserveWeight) * 1e18) / 1e6;
     }
 
-    // Market cap PS = R / F, remember.
     function _calculateMarketCapInETH() internal view returns (uint256 marketCapInETH) {
-        uint256 weightIn18Decimals = _convertWeightTo18Decimals();
-        return (getReserveBalance() / weightIn18Decimals);
+        return (price() * totalSupply()) / 1e18;
     }
 
     function _calculateMarketCapInUSD() internal view returns (uint256 marketCapInUSD) {
@@ -179,19 +177,19 @@ contract BayviewContinuousToken is
     }
 
     function _setupNewPoolWithLiquidity() internal {
-        (uint256 tokenAmountToSend, uint256 ethValueToSend) = _approveBothAssetsAndReturnAmounts();
+        uint256 ethValueToSend = _calculateETHEquivalentForLPHalfUSDValue();
+        uint256 tokenAmountToSend = quantityToBuyWithDepositAmount(ethValueToSend);
 
         uint160 sqrtPriceX96 = _getSqrtPriceX96(tokenAmountToSend, ethValueToSend);
-
         pool = _createNewPoolIfNecessary(sqrtPriceX96);
+
+        _approveBothAssets(tokenAmountToSend, ethValueToSend);
+
         uint128 liquidity = _addLiquidity(tokenAmountToSend, ethValueToSend);
         if (liquidity == 0) revert LiquidityNotAdded();
     }
 
-    function _approveBothAssetsAndReturnAmounts() internal returns (uint256 tokenAmountToSend, uint256 ethValueToSend) {
-        ethValueToSend = _calculateETHEquivalentForLPHalfUSDValue();
-        tokenAmountToSend = quantityToBuyWithDepositAmount(ethValueToSend);
-        
+    function _approveBothAssets(uint256 tokenAmountToSend, uint256 ethValueToSend) internal {
         _mint(address(this), tokenAmountToSend);
         _approve(address(this), pool, tokenAmountToSend);
 
