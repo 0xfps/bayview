@@ -54,7 +54,11 @@ contract BayviewContinuousTokenController is IBayviewContinuousTokenController {
         ));
 
         uint256 initialReserve = msg.value / 2;
+
         (bool sent, ) = token.call{ value: initialReserve }("");
+        (bool refund, ) = msg.sender.call{ value: initialReserve }("");
+
+        if (!refund) revert ValueNotSent(initialReserve);
         if (!sent) revert ValueNotSent(initialReserve);
 
         bayviewTokenMap[token] = true;

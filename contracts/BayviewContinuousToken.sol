@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { IBayviewContinuousToken } from "./interfaces/IBayviewContinuousToken.sol";
 import { IEmitter } from "./interfaces/IEmitter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { INonFungiblePositionManager } from "./liquidity-pool/interfaces/INonFungiblePositionManager.sol";
 import { IPythOracle } from "./oracles/interfaces/IPythOracle.sol";
 
 import { Math } from "./libraries/Math.sol";
@@ -22,7 +23,7 @@ import { PoolLiquidityProvider } from "./liquidity-pool/PoolLiquidityProvider.so
  */
 
 contract BayviewContinuousToken is 
-    IBayviewContinuousToken, 
+    IBayviewContinuousToken,
     BancorBondingCurveMath,
     PoolLiquidityProvider,
     ERC20
@@ -33,13 +34,14 @@ contract BayviewContinuousToken is
     IEmitter internal immutable emitter;
 
     uint64 internal constant INITIAL_MINT = 1e18;
-    uint32 public constant reserveWeight = 200_000;
+    uint32 public constant reserveWeight = 700_000;
     uint32 public constant BONDING_CURVE_LIMIT = 69_000; 
     uint32 public constant LP_HALF = 15_000;
     
     address public owner;
     address public pool;
     bool internal locked;
+    address internal positionManager;
 
     modifier lock {
         if (locked) revert TransactionLocked();
@@ -67,6 +69,7 @@ contract BayviewContinuousToken is
         owner = _owner;
 
         _mint(controller, INITIAL_MINT);
+        positionManager = _nonFungiblePositionManager;
     }
 
     fallback () external payable {}
@@ -150,10 +153,8 @@ contract BayviewContinuousToken is
         return (uint256(reserveWeight) * 1e18) / 1e6;
     }
 
-    // Market cap PS = R / F, remember.
     function _calculateMarketCapInETH() internal view returns (uint256 marketCapInETH) {
-        uint256 weightIn18Decimals = _convertWeightTo18Decimals();
-        return (getReserveBalance() / weightIn18Decimals);
+        return (price() * totalSupply()) / 1e18;
     }
 
     function _calculateMarketCapInUSD() internal view returns (uint256 marketCapInUSD) {
@@ -179,24 +180,24 @@ contract BayviewContinuousToken is
     }
 
     function _setupNewPoolWithLiquidity() internal {
-        (uint256 tokenAmountToSend, uint256 ethValueToSend) = _approveBothAssetsAndReturnAmounts();
+        uint256 ethValueToSend = _calculateETHEquivalentForLPHalfUSDValue();
+        uint256 tokenAmountToSend = quantityToBuyWithDepositAmount(ethValueToSend);
 
         uint160 sqrtPriceX96 = _getSqrtPriceX96(tokenAmountToSend, ethValueToSend);
-
         pool = _createNewPoolIfNecessary(sqrtPriceX96);
+
+        _approveBothAssets(tokenAmountToSend, ethValueToSend);
+
         uint128 liquidity = _addLiquidity(tokenAmountToSend, ethValueToSend);
         if (liquidity == 0) revert LiquidityNotAdded();
     }
 
-    function _approveBothAssetsAndReturnAmounts() internal returns (uint256 tokenAmountToSend, uint256 ethValueToSend) {
-        ethValueToSend = _calculateETHEquivalentForLPHalfUSDValue();
-        tokenAmountToSend = quantityToBuyWithDepositAmount(ethValueToSend);
-        
+    function _approveBothAssets(uint256 tokenAmountToSend, uint256 ethValueToSend) internal {
         _mint(address(this), tokenAmountToSend);
-        _approve(address(this), pool, tokenAmountToSend);
+        _approve(address(this), positionManager, tokenAmountToSend);
 
         _getWETHForETH(ethValueToSend);
-        IERC20(WETH).approve(pool, ethValueToSend);
+        IERC20(WETH).approve(positionManager, ethValueToSend);
     }
 
     function _calculateETHEquivalentForLPHalfUSDValue() internal view returns (uint256 value) {
@@ -204,7 +205,7 @@ contract BayviewContinuousToken is
         uint256 usdLpHalfToPrecision = LP_HALF * (10 ** precision);
         uint256 oneETH = 1e18;
         uint256 numerator = oneETH * usdLpHalfToPrecision;
-        uint256 denominator = ethUsdPrice * (10 ** precision);
+        uint256 denominator = ethUsdPrice;
         value = numerator / denominator;
     }
 

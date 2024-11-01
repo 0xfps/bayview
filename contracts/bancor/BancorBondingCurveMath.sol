@@ -33,7 +33,7 @@ abstract contract BancorBondingCurveMath is Power {
     uint256 totalSupply,
     uint32 reserveWeight
     ) internal view virtual returns (uint256) {
-      return (reserveBalance.div(totalSupply)).mul(MAX_WEIGHT / reserveWeight);
+      return (reserveBalance * 1e18 * MAX_WEIGHT) / (totalSupply * reserveWeight);
   }
 
   /**
