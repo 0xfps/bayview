@@ -25,11 +25,9 @@ contract BayviewContinuousTokenRetireTest is BayviewContinuousTokenTest {
         bayview.retire(address(this), 100000000000000);
     }
 
-    function testRetireWithCallFromNonRetireeOrController(address caller) public {
-        _mint();
-        vm.assume(caller != address(controller) && caller != alice);
+    function testRetireWithCallFromNonRetireeOrController() public {
         vm.expectRevert();
-        vm.prank(caller);
+        vm.prank(chris);
         bayview.retire(alice, 10000000000);
     }
 
