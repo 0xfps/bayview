@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import { IBayviewContinuousToken } from "../../contracts/interfaces/IBayviewContinuousToken.sol";
+
 import { console } from "forge-std/console.sol";
 
 import { BayviewContinuousTokenTest } from "./BayviewContinuousToken.t.sol";
@@ -39,5 +41,13 @@ contract BayviewContinuousTokenMintTest is BayviewContinuousTokenTest {
         console.log("New Pool Price per token:", bayview.price());
         console.log("Price of sale:", bayview.valueToReceiveAfterTokenAmountSale(bayview.balanceOf(alice)));
         console.log("New Pool Address:", bayview.pool());
+    }
+
+    function testMintAndTryCreatePoolCallFromController() public {
+        vm.deal(alice, 40 ether);
+        vm.startPrank(alice);
+        address newToken = controller.deployBayviewContinuousToken{ value: 1 ether }("Big Booty Latina", "$BLB");
+        controller.buy{ value: 10 ether }(IBayviewContinuousToken(newToken));
+        vm.stopPrank();
     }
 }
