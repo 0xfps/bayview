@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { IBayviewContinuousToken } from "./interfaces/IBayviewContinuousToken.sol";
 import { IEmitter } from "./interfaces/IEmitter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { INonFungiblePositionManager } from "./liquidity-pool/interfaces/INonFungiblePositionManager.sol";
 import { IPythOracle } from "./oracles/interfaces/IPythOracle.sol";
 
 import { Math } from "./libraries/Math.sol";
@@ -22,7 +23,7 @@ import { PoolLiquidityProvider } from "./liquidity-pool/PoolLiquidityProvider.so
  */
 
 contract BayviewContinuousToken is 
-    IBayviewContinuousToken, 
+    IBayviewContinuousToken,
     BancorBondingCurveMath,
     PoolLiquidityProvider,
     ERC20
@@ -40,6 +41,7 @@ contract BayviewContinuousToken is
     address public owner;
     address public pool;
     bool internal locked;
+    address internal positionManager;
 
     modifier lock {
         if (locked) revert TransactionLocked();
@@ -67,6 +69,7 @@ contract BayviewContinuousToken is
         owner = _owner;
 
         _mint(controller, INITIAL_MINT);
+        positionManager = _nonFungiblePositionManager;
     }
 
     fallback () external payable {}
@@ -191,10 +194,10 @@ contract BayviewContinuousToken is
 
     function _approveBothAssets(uint256 tokenAmountToSend, uint256 ethValueToSend) internal {
         _mint(address(this), tokenAmountToSend);
-        _approve(address(this), pool, tokenAmountToSend);
+        _approve(address(this), positionManager, tokenAmountToSend);
 
         _getWETHForETH(ethValueToSend);
-        IERC20(WETH).approve(pool, ethValueToSend);
+        IERC20(WETH).approve(positionManager, ethValueToSend);
     }
 
     function _calculateETHEquivalentForLPHalfUSDValue() internal view returns (uint256 value) {

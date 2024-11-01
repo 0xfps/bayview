@@ -17,6 +17,7 @@ abstract contract PoolLiquidityProvider is PoolCreator {
     // Uniswap @ https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/TickMath.sol#L9-L11
     int24 internal constant MIN_TICK = -887272;
     int24 internal constant MAX_TICK = -MIN_TICK;
+    int24 private constant TICK_SPACING = 60;
     
     address internal constant RECIPIENT = address(1);
 
@@ -32,12 +33,12 @@ abstract contract PoolLiquidityProvider is PoolCreator {
             token0: token0,
             token1: token1,
             fee: FEE,
-            tickLower: MIN_TICK,
-            tickUpper: MAX_TICK,
+            tickLower: (MIN_TICK / TICK_SPACING) * TICK_SPACING,
+            tickUpper: (MAX_TICK / TICK_SPACING) * TICK_SPACING,
             amount0Desired: amount0,
             amount1Desired: amount1,
-            amount0Min: 0,
-            amount1Min: 0,
+            amount0Min: 1,
+            amount1Min: 1,
             recipient: RECIPIENT,
             deadline: block.timestamp + THIRTY_MINUTES
         });
