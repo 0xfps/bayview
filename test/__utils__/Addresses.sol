@@ -16,7 +16,7 @@ abstract contract Addresses is Test {
     address public randomAddress = vm.addr(uint256(block.timestamp));
     address public zero = address(0);
 
-    string public arbitrumSepoliaRPC = "https://arbitrum-sepolia.blockpi.network/v1/rpc/public";
+    string public arbitrumSepoliaRPC = "https://arbitrum-sepolia.gateway.tenderly.co";
 
 
     address public pythOracleArbitrumSepoliaAddress = 0x4374e5a8b9C22271E9EB878A2AA31DE97DF15DAF;
