@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import { IPyth } from "@pyth/IPyth.sol";
 
+import { console } from "forge-std/console.sol";
+
 import { Addresses } from "../__utils__/Addresses.sol";
 import { BayviewContinuousToken } from "../../contracts/BayviewContinuousToken.sol";
 import { BayviewContinuousTokenController } from "../../contracts/BayviewContinuousTokenController.sol";
@@ -39,6 +41,8 @@ contract BayviewContinuousTokenTest is Addresses {
     }
 
     function testSetUp() public view {
+        bool iss = address(bayview) < address(WETH);
+        console.log(iss); 
         assertTrue(address(bayview) != address(0));
         assertTrue(bayview.pool() == address(0));
         assertTrue(bayview.owner() == owner);

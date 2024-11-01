@@ -21,11 +21,16 @@ abstract contract PoolCreator {
     }
 
     function _createNewPoolIfNecessary(uint160 sqrtPriceX96) internal returns (address pool) {
+        (address token0, address token1) = _getToken0Token1(); 
         pool = nonFungiblePositionManager.createAndInitializePoolIfNecessary(
-            address(this),
-            WETH,
+            token0,
+            token1,
             FEE,
             sqrtPriceX96
         );
+    }
+
+    function _getToken0Token1() internal view returns (address, address) {
+        return address(this) < WETH ? (address(this), WETH) : (WETH, address(this));
     }
 }

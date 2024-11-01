@@ -24,15 +24,18 @@ abstract contract PoolLiquidityProvider is PoolCreator {
         PoolCreator(_nonFungiblePositionManager, _weth) {}
 
     function _addLiquidity(uint256 bayviewTokenAmount, uint256 wethAmount) internal returns (uint128) {
+        (address token0, address token1) = _getToken0Token1(); 
+        (uint256 amount0, uint256 amount1) = _getAmount0Amount1(bayviewTokenAmount, wethAmount);
+
         INonFungiblePositionManager.MintParams memory mintParams = 
         INonFungiblePositionManager.MintParams({
-            token0: address(this),
-            token1: WETH,
+            token0: token0,
+            token1: token1,
             fee: FEE,
             tickLower: MIN_TICK,
             tickUpper: MAX_TICK,
-            amount0Desired: bayviewTokenAmount,
-            amount1Desired: wethAmount,
+            amount0Desired: amount0,
+            amount1Desired: amount1,
             amount0Min: 0,
             amount1Min: 0,
             recipient: RECIPIENT,
@@ -41,5 +44,10 @@ abstract contract PoolLiquidityProvider is PoolCreator {
 
         (, uint128 liquidity, , ) = nonFungiblePositionManager.mint(mintParams);
         return liquidity;
+    }
+
+    function _getAmount0Amount1(uint256 bayviewTokenAmount, uint256 wethAmount) internal view returns (uint256, uint256) {
+        (address token0,) = _getToken0Token1();
+        return token0 == address(this) ? (bayviewTokenAmount, wethAmount) : (wethAmount, bayviewTokenAmount);
     }
 }
