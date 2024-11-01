@@ -38,6 +38,13 @@ contract BayviewContinuousTokenRetireTest is BayviewContinuousTokenTest {
         bayview.retire(bob, 1);
     }
 
+    function testRetire() public {
+        _mint();
+        uint256 balanceOfAlice = bayview.balanceOf(alice);
+        vm.prank(alice);
+        bayview.retire(alice, balanceOfAlice);
+    }
+
     function testEmit() public {
         _mint();
         vm.prank(address(controller));
