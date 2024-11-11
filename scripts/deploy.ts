@@ -13,7 +13,7 @@ if (!existsSync(destinationDir)) {
     mkdirSync(destinationDir)
 }
 
-async function deployOracleOnChain(chain: string): Promise<string> {
+async function deployAndVerifyOracle(chain: string): Promise<string> {
     const PythOracle = await ethers.getContractFactory("PythOracle")
     // @ts-ignore
     const pythTestnetDeploymentAddress = data[chain].pyth
@@ -29,7 +29,7 @@ async function deployOracleOnChain(chain: string): Promise<string> {
     return pythOracleAddress
 }
 
-async function deployBCTController({ chain, oracleAddress }: { chain: string, oracleAddress: string }): Promise<string> {
+async function deployAndVerifyBCTController({ chain, oracleAddress }: { chain: string, oracleAddress: string }): Promise<string> {
     // @ts-ignore
     const weth = data[chain].weth
     // @ts-ignore
@@ -82,8 +82,8 @@ function writeToFile({ chain, oracleAddress, bctControllerAddress }: any) {
     console.log("##############################################")
     console.log("\n")
 
-    const oracleAddress = await deployOracleOnChain(chain)
-    const bctControllerAddress = await deployBCTController({ chain, oracleAddress })
+    const oracleAddress = await deployAndVerifyOracle(chain)
+    const bctControllerAddress = await deployAndVerifyBCTController({ chain, oracleAddress })
     writeToFile({ chain, oracleAddress, bctControllerAddress })
 
     console.log({
