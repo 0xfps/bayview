@@ -1,0 +1,14 @@
+{
+    "arbitrum": {
+        "controller": "0xC89f391DA9460eed0f7C4496b5e5BFDE998261a1",
+        "oracle": "0xf639deC511086cDC0E672B5c3e2a4D54Fa86b6C0"
+    },
+    "base": {
+        "controller": "0x4E7Ad00746F0E51F6c97e1679F01d25daCc44789",
+        "oracle": "0x383067247bD46E086824501129F5898F783ddFB4"
+    },
+    "optimism": {
+        "controller": "0x06255d4d01552D08e7Eb6229962dc84009d1dB1C",
+        "oracle": "0x12E30CF497F969e6535C3F1E3A4F51c07A69824B"
+    }
+}
