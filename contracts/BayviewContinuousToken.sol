@@ -131,10 +131,12 @@ contract BayviewContinuousToken is
     function retire(address retiree, uint256 amount) public poolNotInitialized lock returns (uint256 salePrice) {
         if ((msg.sender != controller) && (msg.sender != retiree)) revert InvalidCaller();
         if (amount > balanceOf(retiree)) revert BurnExceedsBalance();
-        
+
+        // Price the sale against the supply as it is BEFORE the burn.
+        salePrice = valueToReceiveAfterTokenAmountSale(amount);
+
         _burn(retiree, amount);
 
-        salePrice = valueToReceiveAfterTokenAmountSale(amount);
         (bool sent, ) = retiree.call{ value: salePrice }("");
         
         _validateSending(sent, salePrice);
@@ -214,10 +216,21 @@ contract BayviewContinuousToken is
         _validateSending(sent, ethValueToSend);
     }
 
+    /**
+     * @dev Returns sqrt(token1 / token0) * 2^96, the format Uniswap V3 expects.
+     *
+     *      - Token ordering: Uniswap prices are always token1 per token0, and token0 is
+     *        the lower address. `_getAmount0Amount1` orders the amounts accordingly, so the
+     *        price is inverted automatically when WETH is token0.
+     *      - Precision: instead of dividing first (which truncates to 0 for any price < 1),
+     *        the ratio is scaled by 2^96 before dividing, then
+     *        sqrt(ratio * 2^96) * 2^48 == sqrt(ratio) * 2^96.
+     */
     // https://stackoverflow.com/questions/78182497/how-to-calculate-sqrtpricex96-for-uniswap-pool-creation
-    function _getSqrtPriceX96(uint256 bayviewTokenAmount, uint256 wethAmount) internal pure returns (uint160 sqrtPriceX96) {
-        uint256 priceSqrd = wethAmount / bayviewTokenAmount;
-        uint256 sqrtPrice = Math.sqrt(priceSqrd);
-        sqrtPriceX96 = uint160(sqrtPrice * (2 ** 96));
+    function _getSqrtPriceX96(uint256 bayviewTokenAmount, uint256 wethAmount) internal view returns (uint160 sqrtPriceX96) {
+        (uint256 amount0, uint256 amount1) = _getAmount0Amount1(bayviewTokenAmount, wethAmount);
+
+        uint256 ratioX96 = (amount1 << 96) / amount0;
+        sqrtPriceX96 = uint160(Math.sqrt(ratioX96) << 48);
     }
 }
