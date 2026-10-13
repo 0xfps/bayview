@@ -12,9 +12,17 @@ import { BayviewContinuousToken } from "./BayviewContinuousToken.sol";
  * @author  fps <@0xfps>.
  * @notice  This contract deploys new BayviewContinuousToken contracts and acts as a source for
  *          interactions with them.
+ *
+ * @dev     The controller receives the initial supply of every token it deploys (INITIAL_MINT).
+ *          This supply is intentionally held by the controller, which has no function to
+ *          transfer or sell it, so it stays locked for the lifetime of the token.
  */
 
 contract BayviewContinuousTokenController is IBayviewContinuousTokenController {
+    /**
+     * @dev Minimum ETH a deployer must send. This is a seed deposit, not a kept fee:
+     *      half seeds the new token's reserve and the other half is returned to the deployer.
+     */
     uint256 public constant MIN_DEPLOYMENT_FEE = 1e13;
     
     address public immutable pythOracleAddress;
@@ -53,16 +61,19 @@ contract BayviewContinuousTokenController is IBayviewContinuousTokenController {
             msg.sender
         ));
 
-        uint256 initialReserve = msg.value / 2;
-
-        (bool sent, ) = token.call{ value: initialReserve }("");
-        (bool refund, ) = msg.sender.call{ value: initialReserve }("");
-
-        if (!refund) revert ValueNotSent(initialReserve);
-        if (!sent) revert ValueNotSent(initialReserve);
-
+        // Effects before interactions.
         bayviewTokenMap[token] = true;
         ++bayviewTokenDeploymentCount;
+
+        // Split msg.value exactly, so an odd amount never strands 1 wei in the controller.
+        uint256 initialReserve = msg.value / 2;
+        uint256 refundAmount = msg.value - initialReserve;
+
+        (bool sent, ) = token.call{ value: initialReserve }("");
+        if (!sent) revert ValueNotSent(initialReserve);
+
+        (bool refunded, ) = msg.sender.call{ value: refundAmount }("");
+        if (!refunded) revert ValueNotSent(refundAmount);
         
         emit Deploy(msg.sender, token);
     }
@@ -71,6 +82,7 @@ contract BayviewContinuousTokenController is IBayviewContinuousTokenController {
         amountMinted = token.mint{ value: msg.value }(msg.sender);
         emit Buy(address(token), amountMinted, msg.value);
     }
+
     function sell(IBayviewContinuousToken token, uint256 amount) public returns (uint256 salePrice) {
         salePrice = token.retire(msg.sender, amount);
         emit Sell(address(token), amount, salePrice);
