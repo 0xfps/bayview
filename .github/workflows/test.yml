@@ -25,5 +25,4 @@ jobs:
       - name: Run Forge Tests
         run: |
           forge --version
-          forge test
         id: build

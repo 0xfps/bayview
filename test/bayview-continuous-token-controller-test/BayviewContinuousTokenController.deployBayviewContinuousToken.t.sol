@@ -8,7 +8,7 @@ contract BayviewContinuousTokenControllerDeployTest is BayviewContinuousTokenCon
         vm.prank(owner);
         vm.expectRevert();
         controller.deployBayviewContinuousToken{ value: 0 } (
-            "Big Booty Latina",
+            "Big Pepe",
             "$BLB"
         );
     }
@@ -17,7 +17,7 @@ contract BayviewContinuousTokenControllerDeployTest is BayviewContinuousTokenCon
         vm.deal(owner, 5 ether);
         vm.prank(owner);
         address token = controller.deployBayviewContinuousToken{ value: 2 ether } (
-            "Big Booty Latina",
+            "Big Pepe",
             "$BLB"
         );
         assert(token.balance == 1 ether);

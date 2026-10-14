@@ -46,7 +46,7 @@ contract BayviewContinuousTokenMintTest is BayviewContinuousTokenTest {
     function testMintAndTryCreatePoolCallFromController() public {
         vm.deal(alice, 40 ether);
         vm.startPrank(alice);
-        address newToken = controller.deployBayviewContinuousToken{ value: 1 ether }("Big Booty Latina", "$BLB");
+        address newToken = controller.deployBayviewContinuousToken{ value: 1 ether }("Big Pepe", "$BLB");
         controller.buy{ value: 10 ether }(IBayviewContinuousToken(newToken));
         vm.stopPrank();
     }

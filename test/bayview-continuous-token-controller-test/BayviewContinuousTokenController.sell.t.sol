@@ -14,7 +14,7 @@ contract BayviewContinuousTokenControllerSellTest is BayviewContinuousTokenContr
         vm.prank(owner);
         token = IBayviewContinuousToken(
             controller.deployBayviewContinuousToken{ value: 2 ether } (
-                "Big Booty Latina",
+                "Big Pepe",
                 "$BLB"
             )
         );
